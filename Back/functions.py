@@ -33,8 +33,6 @@ def create_dir(dir):
     return path_to_origin, conn
 
 
-
-
 #Scrape Directory Function: scrapes all folders made by create_dir and returns games as lists in list as [["name","console"]]
 def scrape_dir(dir):
     game_list = []
@@ -76,11 +74,13 @@ def SQL_commit(cursor):
   cursor.execute("SELECT * FROM games")
   rows = cursor.fetchall()
 
-  for row in rows:
-      print(row)
+  # for row in rows:
+  #     print(row)
 
-#Random game function
-
+#Random game function: returns a random game from the SQL table
+def random_game(cursor):
+  cursor.execute("SELECT * FROM games ORDER BY RANDOM() LIMIT 1")
+  return cursor.fetchone()
 #Launch game function
 
 #clear consoles folderL only for testing purposes to reset dir
@@ -96,5 +96,5 @@ cursor = conn.cursor()
 
 SQL_commit(cursor)
 
-
+print(random_game(cursor))
 # reset(dir)
