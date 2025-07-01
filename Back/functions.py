@@ -6,9 +6,19 @@ import os #used to make/manage files
 import shutil #used to remove folder with everything inside
 from pathlib import Path #used to check files
 import sqlite3 #used work with SQL table
+from dotenv import load_dotenv #used to get .env stuff
+import requests #used to access api
 
 #globals
 dir = os.getcwd() #initial directory to be specified by use on launch
+
+
+# Load variables from .env
+load_dotenv()
+
+# Access them
+client_id = os.getenv("TWITCH_CLIENT_ID")
+client_secret = os.getenv("TWITCH_CLIENT_SECRET")
 
 # Rom_dict # collection of all consoles : and relevant extensions
 
@@ -91,10 +101,44 @@ def reset(dir):
 
 
 
-dir,conn = create_dir(dir)
-cursor = conn.cursor()
+# dir,conn = create_dir(dir)
+# cursor = conn.cursor()
 
-SQL_commit(cursor)
+# SQL_commit(cursor)
 
-print(random_game(cursor))
+# print(random_game(cursor))
 # reset(dir)
+
+# Get token
+auth_response = requests.post(
+    'https://id.twitch.tv/oauth2/token',
+    params={
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'grant_type': 'client_credentials'
+    }
+)
+
+
+
+access_token = auth_response.json()['access_token']
+
+# Get game info
+headers = {
+    'Client-ID': client_id,
+    'Authorization': f'Bearer {access_token}'
+}
+
+game_response = requests.get(
+    'https://api.twitch.tv/helix/games',
+    headers=headers,
+    params={'name': 'Banjo-tooie'}
+)
+
+game_data = game_response.json()
+print(game_data)
+game_box_raw = game_data["data"][0]["box_art_url"]
+game_box_fixed = box_url = game_box_raw.replace("{width}", f'{round(1920/4)}').replace("{height}", f'{round(1080/4)}')
+
+print()
+print(game_box_fixed)
