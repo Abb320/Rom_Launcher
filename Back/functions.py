@@ -20,12 +20,36 @@ load_dotenv()
 client_id = os.getenv("TWITCH_CLIENT_ID")
 client_secret = os.getenv("TWITCH_CLIENT_SECRET")
 
-# Rom_dict # collection of all consoles : and relevant extensions
+auth_response = requests.post(
+    'https://id.twitch.tv/oauth2/token',
+    params={
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'grant_type': 'client_credentials'
+    }
+)
 
-#get dir function: get a user specified directory to make folders
-# def get_dir():
-#   dir = input("")
-#   return dir
+access_token = auth_response.json()['access_token']
+
+headers = {
+    'Client-ID': client_id,
+    'Authorization': f'Bearer {access_token}'
+}
+
+
+
+def Get_box_art(game,hight,width):
+    game_response = requests.get(
+        'https://api.twitch.tv/helix/games',
+        headers=headers,
+        params={'name': game}
+    )
+
+
+    game_data = game_response.json()
+    game_box_raw = game_data["data"][0]["box_art_url"]
+    game_box_fixed = box_url = game_box_raw.replace("{width}", f'{width}').replace("{height}", f'{hight}')
+    return(game_box_fixed)
 
 
 #file creation function: makes file directory with all folders for consoles Also checks for SQL DB and makes one  if not
@@ -42,7 +66,6 @@ def create_dir(dir):
     conn = sqlite3.connect(db_path)
     return path_to_origin, conn
 
-
 #Scrape Directory Function: scrapes all folders made by create_dir and returns games as lists in list as [["name","console"]]
 def scrape_dir(dir):
     game_list = []
@@ -53,9 +76,11 @@ def scrape_dir(dir):
         for file in os.listdir(folder_path):
             if file == "games.db":
                 continue  # Skip the DB file
-            game_list.append([folder,file.split('.')[0],f'{dir}/{file}'])
+            box_art = Get_box_art(file.split('(')[0].rstrip(' '),700,450)
+            game_list.append([folder,file.split('(')[0].rstrip(' '),f'{dir}/{file}',file.split('(')[0],box_art])
+    
+    print(game_list)
     return game_list
-
     
 #Enter Data into SQL Function
 def SQL_commit(cursor):
@@ -63,7 +88,8 @@ def SQL_commit(cursor):
   CREATE TABLE IF NOT EXISTS games (
       console TEXT NOT NULL,
       name TEXT NOT NULL,
-      file_path TEXT NOT NULL
+      file_path TEXT NOT NULL,
+      box_art TEXT NOT NULL
   )
   ''')
   conn.commit()
@@ -76,8 +102,8 @@ def SQL_commit(cursor):
     result = cursor.fetchone()
     if not result:
         cursor.execute(
-          "INSERT INTO games (name, console, file_path) VALUES (?, ?, ?)",
-          (game[0], game[1], game[2])
+          "INSERT INTO games (name, console, file_path, box_art) VALUES (?, ?, ?, ?)",
+          (game[0], game[1], game[2], game[4])
         ) 
   conn.commit()
 
@@ -98,47 +124,16 @@ def reset(dir):
   shutil.rmtree(dir)
   print("reset")
 
+dir,conn = create_dir(dir)
+cursor = conn.cursor()
+SQL_commit(cursor)
 
-
-
-# dir,conn = create_dir(dir)
-# cursor = conn.cursor()
-
-# SQL_commit(cursor)
-
-# print(random_game(cursor))
-# reset(dir)
-
-# Get token
-auth_response = requests.post(
-    'https://id.twitch.tv/oauth2/token',
-    params={
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'grant_type': 'client_credentials'
-    }
-)
-
-
-
-access_token = auth_response.json()['access_token']
-
-# Get game info
-headers = {
-    'Client-ID': client_id,
-    'Authorization': f'Bearer {access_token}'
-}
-
-game_response = requests.get(
-    'https://api.twitch.tv/helix/games',
-    headers=headers,
-    params={'name': 'Banjo-tooie'}
-)
-
-game_data = game_response.json()
-print(game_data)
-game_box_raw = game_data["data"][0]["box_art_url"]
-game_box_fixed = box_url = game_box_raw.replace("{width}", f'{round(1920/4)}').replace("{height}", f'{round(1080/4)}')
-
-print()
-print(game_box_fixed)
+# cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+# tables = cursor.fetchall()
+# for table in tables:
+#     table_name = table[0]
+#     print(f"\n--- {table_name} ---")
+#     cursor.execute(f"SELECT * FROM {table_name}")
+#     rows = cursor.fetchall()
+#     for row in rows:
+#         print(row)
