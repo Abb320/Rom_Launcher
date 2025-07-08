@@ -78,9 +78,7 @@ def scrape_dir(dir):
                 continue  # Skip the DB file
             box_art = Get_box_art(file.split('(')[0].rstrip(' '),700,450)
             game_list.append([folder,file.split('(')[0].rstrip(' '),f'{dir}/{file}',file.split('(')[0],box_art])
-    
-    print(game_list)
-    return game_list
+        return game_list
     
 #Enter Data into SQL Function
 def SQL_commit(cursor):
