@@ -135,3 +135,9 @@ SQL_commit(cursor)
 #     rows = cursor.fetchall()
 #     for row in rows:
 #         print(row)
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "create_dir":
+        path, _ = create_dir(dir)
+        print(f"Created directories at: {path}")

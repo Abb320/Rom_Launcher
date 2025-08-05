@@ -47,8 +47,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#check-games-btn")?.addEventListener("click", async () => {
     if (gameStatusEl) {
-      gameStatusEl.textContent = "Checking for games...";
-      const result = await invoke("check_and_add_games");
+      gameStatusEl.textContent = "Create Directories";
+      const result = await invoke("create_dir");
       gameStatusEl.textContent = result as string;
     }
   });
