@@ -8,35 +8,10 @@ from pathlib import Path #used to check files
 import sqlite3 #used work with SQL table
 from dotenv import load_dotenv #used to get .env stuff
 import requests #used to access api
+from twitch_auth import client_id, client_secret, access_token, headers #get vars for twitch api stuff
 
 #globals
 dir = os.getcwd() #initial directory to be specified by use on launch
-
-
-# Load variables from .env
-load_dotenv()
-
-# Access them
-client_id = os.getenv("TWITCH_CLIENT_ID")
-client_secret = os.getenv("TWITCH_CLIENT_SECRET")
-
-auth_response = requests.post(
-    'https://id.twitch.tv/oauth2/token',
-    params={
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'grant_type': 'client_credentials'
-    }
-)
-
-access_token = auth_response.json()['access_token']
-
-headers = {
-    'Client-ID': client_id,
-    'Authorization': f'Bearer {access_token}'
-}
-
-
 
 def Get_box_art(game,hight,width):
     game_response = requests.get(
@@ -125,16 +100,6 @@ def reset(dir):
 dir,conn = create_dir(dir)
 cursor = conn.cursor()
 SQL_commit(cursor)
-
-# cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-# tables = cursor.fetchall()
-# for table in tables:
-#     table_name = table[0]
-#     print(f"\n--- {table_name} ---")
-#     cursor.execute(f"SELECT * FROM {table_name}")
-#     rows = cursor.fetchall()
-#     for row in rows:
-#         print(row)
 
 if __name__ == "__main__":
     import sys
