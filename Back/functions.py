@@ -12,7 +12,8 @@ from twitch_auth import client_id, client_secret, access_token, headers #get var
 import json
 
 #globals
-dir = os.getcwd()
+dir = os.path.join(os.path.expanduser("~"), "Desktop")
+
 def Get_box_art(game,hight,width):
     game_response = requests.get(
         'https://api.twitch.tv/helix/games',
@@ -32,7 +33,6 @@ def create_dir(dir):
     path_to_origin = os.path.join(dir, "consoles")
     if not os.path.isdir(path_to_origin):
         os.mkdir(path_to_origin)
-    # Add emulators folder
     emulators_path = os.path.join(dir, "emulators")
     if not os.path.isdir(emulators_path):
         os.mkdir(emulators_path)
@@ -106,6 +106,8 @@ def random_game(cursor):
   cursor.execute("SELECT * FROM games ORDER BY RANDOM() LIMIT 1")
   return cursor.fetchone()
 #Launch game function
+
+# create_dir(dir)
 
 if __name__ == "__main__":
     print(dir)
