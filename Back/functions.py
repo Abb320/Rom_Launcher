@@ -30,13 +30,13 @@ def Get_box_art(game,hight,width):
 #file creation function: makes file directory with all folders for consoles Also checks for SQL DB and makes one  if not
 def create_dir(dir):
     path_to_origin = os.path.join(dir, "consoles")
-    
     if not os.path.isdir(path_to_origin):
         os.mkdir(path_to_origin)
-        consoles = ["wii", "xbox"]
-        for console in consoles:
-            os.mkdir(os.path.join(path_to_origin, console))
-
+    consoles = ["wii", "xbox"]
+    for console in consoles:
+        console_path = os.path.join(path_to_origin, console)
+        if not os.path.isdir(console_path):
+            os.mkdir(console_path)
     db_path = os.path.join(path_to_origin, "games.db")
     conn = sqlite3.connect(db_path)
     return path_to_origin, conn

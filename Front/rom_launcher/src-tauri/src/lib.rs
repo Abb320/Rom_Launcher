@@ -24,11 +24,27 @@ fn create_dir() -> String {
 }
 
 // This function runs a Python script to check and add games
+#[tauri::command]
+fn scan_games() -> String {
+    let output = Command::new("python")
+        .arg("../../../Back/functions.py")
+        .arg("scan_games")
+        .output()
+        .expect("Failed to execute command");
+
+    if output.status.success() {
+        String::from_utf8_lossy(&output.stdout).to_string()
+    } else {
+        String::from_utf8_lossy(&output.stderr).to_string()
+    }
+}
+
+// In run():
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, create_dir])
+        .invoke_handler(tauri::generate_handler![greet, create_dir, scan_games])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
