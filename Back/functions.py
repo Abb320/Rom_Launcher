@@ -32,7 +32,7 @@ def create_dir(dir):
     path_to_origin = os.path.join(dir, "consoles")
     if not os.path.isdir(path_to_origin):
         os.mkdir(path_to_origin)
-    consoles = ["wii", "xbox"]
+    consoles = ["wii", "xbox", "nes"]
     for console in consoles:
         console_path = os.path.join(path_to_origin, console)
         if not os.path.isdir(console_path):
