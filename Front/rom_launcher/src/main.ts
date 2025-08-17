@@ -91,10 +91,26 @@ window.addEventListener("DOMContentLoaded", () => {
   // Handle continue button click
   continueBtnEl?.addEventListener("click", async () => {
     hideAddGamesSection();
+    // Scan for games
     if (gameStatusEl) {
       gameStatusEl.textContent = "Checking games...";
-      const result = await invoke("check_games");
-      gameStatusEl.textContent = result as string;
+      const result = await invoke("scan_games");
+      // Parse and display game data
+      try {
+        const games = JSON.parse(result as string);
+        if (Array.isArray(games) && games.length > 0) {
+          gameStatusEl.innerHTML = games.map(game =>
+            `<div>
+              <strong>${game.console}:</strong> ${game.name}<br>
+              <img src="${game.box_art}" alt="${game.name} box art" style="max-width:200px; border-radius:8px; margin:8px 0;">
+            </div>`
+          ).join("");
+        } else {
+          gameStatusEl.textContent = "No games found.";
+        }
+      } catch {
+        gameStatusEl.textContent = "Error reading game data.";
+      }
     }
   });
 });

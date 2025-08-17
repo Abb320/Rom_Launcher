@@ -9,9 +9,10 @@ import sqlite3 #used work with SQL table
 from dotenv import load_dotenv #used to get .env stuff
 import requests #used to access api
 from twitch_auth import client_id, client_secret, access_token, headers #get vars for twitch api stuff
+import json
 
 #globals
-dir = os.getcwd() #initial directory to be specified by use on launch
+dir = r"C:\Users\jacob\OneDrive\Documents\rom_launcher"
 
 def Get_box_art(game,hight,width):
     game_response = requests.get(
@@ -51,40 +52,51 @@ def scrape_dir(dir):
         for file in os.listdir(folder_path):
             if file == "games.db":
                 continue  # Skip the DB file
-            box_art = Get_box_art(file.split('(')[0].rstrip(' '),700,450)
-            game_list.append([folder,file.split('(')[0].rstrip(' '),f'{dir}/{file}',file.split('(')[0],box_art])
-        return game_list
+            box_art = Get_box_art(file.split('(')[0].rstrip(' '), 700, 450)
+            game_list.append([
+                folder,  # console
+                file.split('(')[0].rstrip(' '),  # name
+                os.path.join(folder_path, file),  # file path
+                file.split('(')[0],  # name again (can remove)
+                box_art  # box art URL
+            ])
+    return game_list
     
 #Enter Data into SQL Function
 def SQL_commit(cursor):
-  cursor.execute('''
-  CREATE TABLE IF NOT EXISTS games (
-      console TEXT NOT NULL,
-      name TEXT NOT NULL,
-      file_path TEXT NOT NULL,
-      box_art TEXT NOT NULL
-  )
-  ''')
-  conn.commit()
-
-  for game in scrape_dir(dir):
-    cursor.execute(
-      "SELECT 1 FROM games WHERE name = ? AND console = ?",
-      (game[0], game[1])
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS games (
+        console TEXT NOT NULL,
+        name TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        box_art TEXT NOT NULL
     )
-    result = cursor.fetchone()
-    if not result:
+    ''')
+    conn.commit()
+
+    for game in scrape_dir(os.path.join(dir, "consoles")):
         cursor.execute(
-          "INSERT INTO games (name, console, file_path, box_art) VALUES (?, ?, ?, ?)",
-          (game[0], game[1], game[2], game[4])
-        ) 
-  conn.commit()
+            "SELECT 1 FROM games WHERE name = ? AND console = ?",
+            (game[1], game[0])
+        )
+        result = cursor.fetchone()
+        if not result:
+            cursor.execute(
+                "INSERT INTO games (console, name, file_path, box_art) VALUES (?, ?, ?, ?)",
+                (game[0], game[1], game[2], game[4])
+            )
+        else:
+            cursor.execute(
+                "UPDATE games SET file_path = ?, box_art = ? WHERE name = ? AND console = ?",
+                (game[2], game[4], game[1], game[0])
+            )
+    conn.commit()
 
-  cursor.execute("SELECT * FROM games")
-  rows = cursor.fetchall()
+    cursor.execute("SELECT * FROM games")
+    rows = cursor.fetchall()
 
-  # for row in rows:
-  #     print(row)
+    # for row in rows:
+    #     print(row)
 
 #Random game function: returns a random game from the SQL table
 def random_game(cursor):
@@ -106,3 +118,21 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "create_dir":
         path, _ = create_dir(dir)
         print(f"Created directories at: {path}")
+    elif len(sys.argv) > 1 and sys.argv[1] == "scan_games":
+        path_to_origin = os.path.join(dir, "consoles")
+        db_path = os.path.join(path_to_origin, "games.db")
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        SQL_commit(cursor)
+        cursor.execute("SELECT console, name, file_path, box_art FROM games")
+        rows = cursor.fetchall()
+        formatted_games = [
+            {
+                "console": row[0],
+                "name": row[1],
+                "file_path": row[2],
+                "box_art": row[3]
+            }
+            for row in rows
+        ]
+        print(json.dumps(formatted_games))
